@@ -22,4 +22,10 @@ pub enum FundraiserError {
     TooManyCollaborations,
     #[msg("The campaign has already been claimed")]
     AlreadyClaimed,
+    #[msg("The metadata URI is empty or too long")]
+    InvalidUri,
+    #[msg("The campaign has not been claimed yet")]
+    CampaignNotClaimed,
+    #[msg("This contributor already received a badge")]
+    BadgeAlreadyMinted,
 }

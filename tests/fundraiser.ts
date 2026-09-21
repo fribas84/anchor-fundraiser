@@ -11,6 +11,7 @@ import {
 } from "@solana/spl-token";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { assert } from "chai";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 describe("fundraiser", () => {
   // Configure the client to use the local cluster.
@@ -155,7 +156,7 @@ describe("fundraiser", () => {
     let contributorAccount =
       await program.account.contributor.fetch(contributor);
     console.log("Contributor balance", contributorAccount.amount.toString());
-    
+
     assert.strictEqual(contributorAccount.position, 1);
     assert.strictEqual(contributorAccount.collaborations.length, 1);
     assert.strictEqual(
@@ -163,8 +164,41 @@ describe("fundraiser", () => {
       "1000000",
     );
     assert.isFalse(contributorAccount.badgeMinted);
-    
-  
+        const badgeMint = anchor.web3.PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("badge"),
+            fundraiser.toBuffer(),
+            provider.publicKey.toBuffer(),
+          ],
+          program.programId,
+        )[0];
+        const badgeAta = getAssociatedTokenAddressSync(
+          badgeMint,
+          provider.publicKey,
+          false,
+          TOKEN_2022_PROGRAM_ID,
+        );
+
+        try {
+          await program.methods
+            .airdropBadge("https://example.com/badge.json")
+            .accountsPartial({
+              payer: provider.publicKey,
+              contributor: provider.publicKey,
+              fundraiser,
+              contributorAccount: contributor,
+              badgeMint,
+              badgeAta,
+              token2022Program: TOKEN_2022_PROGRAM_ID,
+              associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+              systemProgram: anchor.web3.SystemProgram.programId,
+            })
+            .rpc();
+          throw new Error("airdrop must wait for claim");
+        } catch (e: any) {
+          const code = e.error?.errorCode?.code ?? e.message;
+          assert.match(String(code), /CampaignNotClaimed/i);
+        }
   });
   it("Contribute to Fundraiser", async () => {
     const vault = getAssociatedTokenAddressSync(mint, fundraiser, true);
@@ -260,7 +294,6 @@ describe("fundraiser", () => {
       );
       const campaign = await program.account.fundraiser.fetch(fundraiser);
       assert.isFalse(campaign.isClaimed);
-      
     } catch (error) {
       console.log("\nError checking contributions");
       console.log(error.msg);

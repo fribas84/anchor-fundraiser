@@ -4,15 +4,14 @@ declare_id!("Gas8wW4Yk4DDfc99pB9A8gSHSZiDpXNaENQkC2wGdwqU");
 
 mod constants;
 mod error;
+mod events;
 mod instructions;
 mod state;
-mod events;
-
 
 pub use constants::*;
 use error::*;
-use instructions::*;
 pub use events::*;
+use instructions::*;
 
 #[program]
 pub mod fundraiser {
@@ -35,6 +34,11 @@ pub mod fundraiser {
 
     pub fn refund(ctx: Context<Refund>) -> Result<()> {
         ctx.accounts.refund()?;
+        Ok(())
+    }
+
+    pub fn airdrop_badge(ctx: Context<AirdropBadge>, uri: String) -> Result<()> {
+        ctx.accounts.airdrop_badge(uri, &ctx.bumps)?;
         Ok(())
     }
 }
