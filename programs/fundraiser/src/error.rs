@@ -20,4 +20,6 @@ pub enum FundraiserError {
     InvalidAmount,
     #[msg("Too many collaborations for this contributor")]
     TooManyCollaborations,
+    #[msg("The campaign has already been claimed")]
+    AlreadyClaimed,
 }
