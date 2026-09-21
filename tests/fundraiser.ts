@@ -164,41 +164,58 @@ describe("fundraiser", () => {
       "1000000",
     );
     assert.isFalse(contributorAccount.badgeMinted);
-        const badgeMint = anchor.web3.PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("badge"),
-            fundraiser.toBuffer(),
-            provider.publicKey.toBuffer(),
-          ],
-          program.programId,
-        )[0];
-        const badgeAta = getAssociatedTokenAddressSync(
-          badgeMint,
-          provider.publicKey,
-          false,
-          TOKEN_2022_PROGRAM_ID,
-        );
+    const badgeMint = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("badge"),
+        fundraiser.toBuffer(),
+        provider.publicKey.toBuffer(),
+      ],
+      program.programId,
+    )[0];
+    const badgeAta = getAssociatedTokenAddressSync(
+      badgeMint,
+      provider.publicKey,
+      false,
+      TOKEN_2022_PROGRAM_ID,
+    );
 
-        try {
-          await program.methods
-            .airdropBadge("https://example.com/badge.json")
-            .accountsPartial({
-              payer: provider.publicKey,
-              contributor: provider.publicKey,
-              fundraiser,
-              contributorAccount: contributor,
-              badgeMint,
-              badgeAta,
-              token2022Program: TOKEN_2022_PROGRAM_ID,
-              associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-              systemProgram: anchor.web3.SystemProgram.programId,
-            })
-            .rpc();
-          throw new Error("airdrop must wait for claim");
-        } catch (e: any) {
-          const code = e.error?.errorCode?.code ?? e.message;
-          assert.match(String(code), /CampaignNotClaimed/i);
-        }
+    try {
+      await program.methods
+        .airdropBadge("https://example.com/badge.json")
+        .accountsPartial({
+          payer: provider.publicKey,
+          contributor: provider.publicKey,
+          fundraiser,
+          contributorAccount: contributor,
+          badgeMint,
+          badgeAta,
+          token2022Program: TOKEN_2022_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .rpc();
+      throw new Error("airdrop must wait for claim");
+    } catch (e: any) {
+      const code = e.error?.errorCode?.code ?? e.message;
+      assert.match(String(code), /CampaignNotClaimed/i);
+    }
+    try {
+      await program.methods
+        .closeFundraiser()
+        .accountsPartial({
+          maker: maker.publicKey,
+          mintToRaise: mint,
+          fundraiser,
+          vault,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([maker])
+        .rpc();
+      throw new Error("close must wait for claim + badges");
+    } catch (e: any) {
+      const code = e.error?.errorCode?.code ?? e.message;
+      assert.match(String(code), /CampaignNotClaimed/i);
+    }
   });
   it("Contribute to Fundraiser", async () => {
     const vault = getAssociatedTokenAddressSync(mint, fundraiser, true);

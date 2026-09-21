@@ -28,4 +28,8 @@ pub enum FundraiserError {
     CampaignNotClaimed,
     #[msg("This contributor already received a badge")]
     BadgeAlreadyMinted,
+    #[msg("Not every contributor has received a badge")]
+    BadgesOutstanding,
+    #[msg("The vault still holds tokens")]
+    VaultNotEmpty,
 }

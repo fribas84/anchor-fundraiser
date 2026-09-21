@@ -41,4 +41,9 @@ pub mod fundraiser {
         ctx.accounts.airdrop_badge(uri, &ctx.bumps)?;
         Ok(())
     }
+
+    pub fn close_fundraiser(ctx: Context<CloseFundraiser>) -> Result<()> {
+        ctx.accounts.close_fundraiser()?;
+        Ok(())
+    }
 }
