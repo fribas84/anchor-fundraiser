@@ -258,6 +258,9 @@ describe("fundraiser", () => {
         "Vault balance",
         (await provider.connection.getTokenAccountBalance(vault)).value.amount,
       );
+      const campaign = await program.account.fundraiser.fetch(fundraiser);
+      assert.isFalse(campaign.isClaimed);
+      
     } catch (error) {
       console.log("\nError checking contributions");
       console.log(error.msg);

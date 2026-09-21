@@ -45,6 +45,7 @@ pub struct Contribute<'info> {
 
 impl<'info> Contribute<'info> {
     pub fn contribute(&mut self, amount: u64, bumps: &ContributeBumps) -> Result<()> {
+        require!(!self.fundraiser.is_claimed, FundraiserError::AlreadyClaimed);
         // Check that the contribution is at least one whole token.
         //
         // The previous form was `1_u8.pow(decimals)`, and 1 raised to any power is 1

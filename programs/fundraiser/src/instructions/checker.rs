@@ -37,7 +37,7 @@ pub struct CheckContributions<'info> {
 }
 
 impl<'info> CheckContributions<'info> {
-    pub fn check_contributions(&self) -> Result<()> {
+    pub fn check_contributions(&mut self) -> Result<()> {
         // Check if the target amount has been met
         require!(
             self.vault.amount >= self.fundraiser.amount_to_raise,
