@@ -105,7 +105,7 @@ describe("fundraiser", () => {
       .initialize(new anchor.BN(30000000), 7) // days; must be at least 1
       .accountsPartial({
         maker: maker.publicKey,
-        fundraiser,
+        minter: provider.publicKey,
         mintToRaise: mint,
         vault,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -204,6 +204,7 @@ describe("fundraiser", () => {
         .closeFundraiser()
         .accountsPartial({
           maker: maker.publicKey,
+          minter: provider.publicKey,
           mintToRaise: mint,
           fundraiser,
           vault,

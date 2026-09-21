@@ -11,9 +11,9 @@ use anchor_spl::{
         MintTo, Token2022,
     },
     token_2022_extensions::{
-        metadata_pointer_initialize, non_transferable_mint_initialize, token_metadata_initialize,
+        metadata_pointer_initialize, non_transferable_mint_initialize,
+        spl_token_metadata_interface::state::TokenMetadata, token_metadata_initialize,
         MetadataPointerInitialize, NonTransferableMintInitialize, TokenMetadataInitialize,
-        spl_token_metadata_interface::state::TokenMetadata,
     },
 };
 
@@ -57,14 +57,27 @@ pub struct AirdropBadge<'info> {
 
 impl<'info> AirdropBadge<'info> {
     pub fn airdrop_badge(&mut self, uri: String, bumps: &AirdropBadgeBumps) -> Result<()> {
-        require!(self.fundraiser.is_claimed, FundraiserError::CampaignNotClaimed);
+        require!(
+            self.fundraiser.is_claimed,
+            FundraiserError::CampaignNotClaimed
+        );
         require!(
             !self.contributor_account.badge_minted,
             FundraiserError::BadgeAlreadyMinted
         );
-        require!(!uri.is_empty() && uri.len() <= MAX_URI_LEN, FundraiserError::InvalidUri);
-        require!(self.badge_mint.data_is_empty(), FundraiserError::BadgeAlreadyMinted);
-
+        require!(
+            !uri.is_empty() && uri.len() <= MAX_URI_LEN,
+            FundraiserError::InvalidUri
+        );
+        require!(
+            self.badge_mint.data_is_empty(),
+            FundraiserError::BadgeAlreadyMinted
+        );
+        require_keys_eq!(
+            self.payer.key(),
+            self.fundraiser.minter,
+            FundraiserError::UnauthorizeMinter
+        );
         let expected_ata = get_associated_token_address_with_program_id(
             &self.contributor.key(),
             &self.badge_mint.key(),

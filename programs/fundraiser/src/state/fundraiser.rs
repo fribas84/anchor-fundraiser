@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 #[derive(InitSpace)]
 pub struct Fundraiser {
     pub maker: Pubkey,
+    pub minter: Pubkey,
     pub mint_to_raise: Pubkey,
     pub amount_to_raise: u64,
     pub current_amount: u64,

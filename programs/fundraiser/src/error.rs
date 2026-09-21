@@ -32,4 +32,6 @@ pub enum FundraiserError {
     BadgesOutstanding,
     #[msg("The vault still holds tokens")]
     VaultNotEmpty,
+    #[msg("Only the designated minter can airdrop badges")]
+    UnauthorizeMinter,
 }

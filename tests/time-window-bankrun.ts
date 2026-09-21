@@ -205,6 +205,7 @@ describe("fundraiser — the window closes (bankrun)", () => {
           .initialize(new anchor.BN(TARGET), DURATION_DAYS)
           .accountsPartial({
             maker: maker.publicKey,
+            minter: provider.publicKey,
             mintToRaise: mint,
             fundraiser,
             vault,
