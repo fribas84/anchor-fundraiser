@@ -62,6 +62,9 @@ impl<'info> Initialize<'info> {
             current_amount: 0,
             time_started: Clock::get()?.unix_timestamp,
             duration,
+            contributor_count: 0,
+            badges_minted: 0,
+            is_claimed: false,
             bump: bumps.fundraiser
         });
         

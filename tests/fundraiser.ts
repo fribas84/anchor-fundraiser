@@ -3,6 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Fundraiser } from "../target/types/fundraiser";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, createMint, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { assert } from "chai";
 
 describe("fundraiser", () => {
   // Configure the client to use the local cluster.
@@ -33,6 +34,7 @@ describe("fundraiser", () => {
     });
     return signature;
   };
+
 
   it("Test Preparation", async() => {
     const airdrop = await provider.connection.requestAirdrop(maker.publicKey, 1 * anchor.web3.LAMPORTS_PER_SOL).then(confirm);
@@ -70,6 +72,11 @@ describe("fundraiser", () => {
       skipPreflight: true,
     })
     .then(confirm);
+
+    const account = await program.account.fundraiser.fetch(fundraiser);
+    assert.strictEqual(account.contributorCount, 0);
+    assert.strictEqual(account.badgesMinted, 0);
+    assert.isFalse(account.isClaimed);
 
     console.log("\nInitialized fundraiser Account");
     console.log("Your transaction signature", tx);

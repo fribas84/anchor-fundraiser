@@ -9,5 +9,8 @@ pub struct Fundraiser {
     pub current_amount: u64,
     pub time_started: i64,
     pub duration: u8,
+    pub contributor_count: u32, 
+    pub badges_minted: u32,     
+    pub is_claimed: bool,       
     pub bump: u8,
 }
