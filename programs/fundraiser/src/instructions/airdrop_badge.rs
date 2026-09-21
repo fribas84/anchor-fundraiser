@@ -85,8 +85,17 @@ impl<'info> AirdropBadge<'info> {
         );
         require_keys_eq!(self.badge_ata.key(), expected_ata);
 
-        let space = badge_mint_account_size(&uri)?;
-        let lamports = Rent::get()?.minimum_balance(space);
+        // Create with NonTransferable + MetadataPointer only. TokenMetadata is a
+        // variable-len TLV written after InitializeMint2; pre-sizing for it makes
+        // InitializeMint2 reject the account (InvalidAccountData). Pay rent for the
+        // final size so token_metadata_initialize can realloc.
+        let space = badge_mint_base_len()?;
+        let extra = badge_metadata_tlv_len(&uri, self.badge_mint.key(), self.fundraiser.key())?;
+        let lamports = Rent::get()?.minimum_balance(
+            space
+                .checked_add(extra)
+                .ok_or(FundraiserError::InvalidUri)?,
+        );
         let fundraiser_key = self.fundraiser.key();
         let contributor_key = self.contributor.key();
         let mint_seeds: &[&[u8]] = &[
@@ -212,22 +221,28 @@ impl<'info> AirdropBadge<'info> {
     }
 }
 
-fn badge_mint_account_size(uri: &str) -> Result<usize> {
-    let metadata = TokenMetadata {
-        name: BADGE_NAME.to_string(),
-        symbol: BADGE_SYMBOL.to_string(),
-        uri: uri.to_string(),
-        ..Default::default()
-    };
-    let extra = metadata
-        .tlv_size_of()
-        .map_err(|_| error!(FundraiserError::InvalidUri))?;
-    let base = ExtensionType::try_calculate_account_len::<
+fn badge_mint_base_len() -> Result<usize> {
+    ExtensionType::try_calculate_account_len::<
         anchor_spl::token_2022::spl_token_2022::state::Mint,
     >(&[
         ExtensionType::NonTransferable,
         ExtensionType::MetadataPointer,
     ])
-    .map_err(|_| error!(FundraiserError::InvalidUri))?;
-    Ok(base.saturating_add(extra))
+    .map_err(|_| error!(FundraiserError::InvalidUri))
+}
+
+fn badge_metadata_tlv_len(uri: &str, mint: Pubkey, update_authority: Pubkey) -> Result<usize> {
+    let metadata = TokenMetadata {
+        name: BADGE_NAME.to_string(),
+        symbol: BADGE_SYMBOL.to_string(),
+        uri: uri.to_string(),
+        mint,
+        update_authority: Some(update_authority)
+            .try_into()
+            .map_err(|_| error!(FundraiserError::InvalidUri))?,
+        additional_metadata: vec![],
+    };
+    metadata
+        .tlv_size_of()
+        .map_err(|_| error!(FundraiserError::InvalidUri))
 }

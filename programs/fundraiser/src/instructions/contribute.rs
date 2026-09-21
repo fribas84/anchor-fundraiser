@@ -3,8 +3,8 @@ use anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer};
 
 use crate::{
     state::{Collaboration, Contributor, Fundraiser},
-    FundraiserError, ANCHOR_DISCRIMINATOR, MAX_COLLABORATIONS, MAX_CONTRIBUTION_PERCENTAGE,
-    PERCENTAGE_SCALER, SECONDS_TO_DAYS,
+    ContributionRecorded, FundraiserError, ANCHOR_DISCRIMINATOR, MAX_COLLABORATIONS,
+    MAX_CONTRIBUTION_PERCENTAGE, PERCENTAGE_SCALER, SECONDS_TO_DAYS,
 };
 
 #[derive(Accounts)]
@@ -121,6 +121,13 @@ impl<'info> Contribute<'info> {
         // Update the fundraiser and contributor accounts with the new amounts
         self.fundraiser.current_amount += amount;
         self.contributor_account.amount += amount;
+        
+        emit!(ContributionRecorded {
+            fundraiser: self.fundraiser.key(),
+            contributor: self.contributor.key(),
+            amount,
+            position: self.contributor_account.position,
+        });
         Ok(())
     }
 }

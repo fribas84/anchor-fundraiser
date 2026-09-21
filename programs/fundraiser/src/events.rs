@@ -14,3 +14,11 @@ pub struct BadgeAirdropped {
     pub badge_mint: Pubkey,
     pub uri: String,
 }
+
+#[event]
+pub struct ContributionRecorded {
+    pub fundraiser: Pubkey,
+    pub contributor: Pubkey,
+    pub amount: u64,
+    pub position: u32,
+}

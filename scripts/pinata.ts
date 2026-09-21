@@ -3,20 +3,26 @@ export async function pinJsonToPinata(args: {
   name: string;
   body: unknown;
 }): Promise<string> {
-  const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+  const file = new File(
+    [JSON.stringify(args.body)],
+    `${args.name}.json`,
+    { type: "application/json" },
+  );
+  const form = new FormData();
+  form.append("file", file);
+  form.append("name", args.name);
+  form.append("network", "public");
+
+  const res = await fetch("https://uploads.pinata.cloud/v3/files", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${args.jwt}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      pinataMetadata: { name: args.name },
-      pinataContent: args.body,
-    }),
+    headers: { Authorization: `Bearer ${args.jwt}` },
+    body: form,
   });
   if (!res.ok)
     throw new Error(`Pinata pin failed (${res.status}): ${await res.text()}`);
-  const data = (await res.json()) as { IpfsHash?: string };
-  if (!data.IpfsHash) throw new Error("Pinata response missing IpfsHash");
-  return data.IpfsHash;
+
+  const data = (await res.json()) as { data?: { cid?: string }; cid?: string };
+  const cid = data.data?.cid ?? data.cid;
+  if (!cid) throw new Error("Pinata response missing cid");
+  return cid;
 }
