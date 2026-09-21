@@ -1,19 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, 
-    token::{
-        transfer, 
-        Mint, 
-        Token, 
-        TokenAccount, 
-        Transfer
-    }
+    associated_token::AssociatedToken,
+    token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
 
-use crate::{
-    state::Fundraiser, 
-    FundraiserError
-};
+use crate::{state::Fundraiser, CampaignClaimed, FundraiserError};
 
 #[derive(Accounts)]
 pub struct CheckContributions<'info> {
@@ -47,12 +38,13 @@ pub struct CheckContributions<'info> {
 
 impl<'info> CheckContributions<'info> {
     pub fn check_contributions(&self) -> Result<()> {
-        
         // Check if the target amount has been met
         require!(
             self.vault.amount >= self.fundraiser.amount_to_raise,
             FundraiserError::TargetNotMet
         );
+
+        require!(!self.fundraiser.is_claimed, FundraiserError::AlreadyClaimed);
 
         // Transfer the funds to the maker
         // CPI to the token program to transfer the funds
@@ -78,6 +70,12 @@ impl<'info> CheckContributions<'info> {
 
         // Transfer the funds from the vault to the maker
         transfer(cpi_ctx, self.vault.amount)?;
+        self.fundraiser.is_claimed = true;
+        emit!(CampaignClaimed {
+            fundraiser: self.fundraiser.key(),
+            maker: self.maker.key(),
+            contributor_count: self.fundraiser.contributor_count,
+        });
 
         Ok(())
     }
