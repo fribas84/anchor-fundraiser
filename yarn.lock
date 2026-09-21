@@ -947,6 +947,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv@npm:^18.0.1":
+  version: 18.0.1
+  resolution: "dotenv@npm:18.0.1"
+  bin:
+    dotenv: dist/index.cjs
+  checksum: 8cd50930a9a5ce0b2da5913383f8e4cd1936fedfb3db3f688b6f4217193cf72ad14b0fb26e5e2e68c157db13e8d26805dcf83219c67e23fd2a49867890804f27
+  languageName: node
+  linkType: hard
+
 "emoji-regex@npm:^8.0.0":
   version: 8.0.0
   resolution: "emoji-regex@npm:8.0.0"
@@ -1613,6 +1622,7 @@ __metadata:
     "@types/node": ^22.10.2
     anchor-bankrun: ^0.5.0
     chai: ^4.5.0
+    dotenv: ^18.0.1
     mocha: ^10.8.2
     prettier: ^3.6.2
     solana-bankrun: ^0.4.0

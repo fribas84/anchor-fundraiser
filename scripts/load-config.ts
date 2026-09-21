@@ -1,3 +1,5 @@
+import { config as loadDotenv } from "dotenv";
+
 export type BadgeUriScheme = "ipfs" | "gateway";
 
 export type BadgeConfig = {
@@ -21,6 +23,7 @@ export function loadBadgeConfig(
   env: NodeJS.ProcessEnv = process.env,
   requireObserverSecrets = false,
 ): BadgeConfig {
+  if (env === process.env) loadDotenv();
   const scheme = (readEnv(env, "BADGE_URI_SCHEME") ?? "ipfs") as BadgeUriScheme;
   if (scheme !== "ipfs" && scheme !== "gateway") {
     throw new Error(`BADGE_URI_SCHEME must be ipfs or gateway, got ${scheme}`);
