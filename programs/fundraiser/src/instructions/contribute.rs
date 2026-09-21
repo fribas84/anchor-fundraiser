@@ -1,20 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{
-    Mint, 
-    transfer, 
-    Token, 
-    TokenAccount, 
-    Transfer
-};
+use anchor_spl::token::{transfer, Mint, Token, TokenAccount, Transfer};
 
 use crate::{
-    state::{
-        Contributor, 
-        Fundraiser
-    }, FundraiserError, 
-    ANCHOR_DISCRIMINATOR, 
-    MAX_CONTRIBUTION_PERCENTAGE, 
-    PERCENTAGE_SCALER, SECONDS_TO_DAYS
+    state::{Collaboration, Contributor, Fundraiser},
+    FundraiserError, ANCHOR_DISCRIMINATOR, MAX_COLLABORATIONS, MAX_CONTRIBUTION_PERCENTAGE,
+    PERCENTAGE_SCALER, SECONDS_TO_DAYS,
 };
 
 #[derive(Accounts)]
@@ -54,8 +44,7 @@ pub struct Contribute<'info> {
 }
 
 impl<'info> Contribute<'info> {
-    pub fn contribute(&mut self, amount: u64) -> Result<()> {
-
+    pub fn contribute(&mut self, amount: u64, bumps: &ContributeBumps) -> Result<()> {
         // Check that the contribution is at least one whole token.
         //
         // The previous form was `1_u8.pow(decimals)`, and 1 raised to any power is 1
@@ -68,7 +57,9 @@ impl<'info> Contribute<'info> {
 
         // Check if the amount to contribute is less than the maximum allowed contribution
         require!(
-            amount <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE) / PERCENTAGE_SCALER, 
+            amount
+                <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE)
+                    / PERCENTAGE_SCALER,
             FundraiserError::ContributionTooBig
         );
 
@@ -82,8 +73,12 @@ impl<'info> Contribute<'info> {
 
         // Check if the maximum contributions per contributor have been reached
         require!(
-            (self.contributor_account.amount <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE) / PERCENTAGE_SCALER)
-                && (self.contributor_account.amount + amount <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE) / PERCENTAGE_SCALER),
+            (self.contributor_account.amount
+                <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE)
+                    / PERCENTAGE_SCALER)
+                && (self.contributor_account.amount + amount
+                    <= (self.fundraiser.amount_to_raise * MAX_CONTRIBUTION_PERCENTAGE)
+                        / PERCENTAGE_SCALER),
             FundraiserError::MaximumContributionsReached
         );
 
@@ -101,11 +96,30 @@ impl<'info> Contribute<'info> {
         // Transfer the funds from the contributor to the vault
         transfer(cpi_ctx, amount)?;
 
+        require!(
+            self.contributor_account.collaborations.len() < MAX_COLLABORATIONS,
+            FundraiserError::TooManyCollaborations
+        );
+        let is_first = self.contributor_account.collaborations.is_empty();
+        if is_first {
+            self.fundraiser.contributor_count = self
+                .fundraiser
+                .contributor_count
+                .checked_add(1)
+                .ok_or(FundraiserError::TooManyCollaborations)?;
+            self.contributor_account.fundraiser = self.fundraiser.key();
+            self.contributor_account.contributor = self.contributor.key();
+            self.contributor_account.position = self.fundraiser.contributor_count;
+            self.contributor_account.bump = bumps.contributor_account;
+        }
+        self.contributor_account.collaborations.push(Collaboration {
+            timestamp: current_time,
+            amount,
+        });
+
         // Update the fundraiser and contributor accounts with the new amounts
         self.fundraiser.current_amount += amount;
-
         self.contributor_account.amount += amount;
-
         Ok(())
     }
 }
